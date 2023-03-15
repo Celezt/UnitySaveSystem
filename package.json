@@ -1,0 +1,10 @@
+{
+    "name": "com.celezt.savesystem",
+    "version": "0.1.0",
+    "displayName": "Save System",
+    "description": "Save system for unity",
+    "unity": "2022.2",
+    "keywords": [
+      "Save"
+    ]
+  }
