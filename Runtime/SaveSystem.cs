@@ -4,10 +4,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using IngameDebugConsole;
 using Sirenix.Serialization;
 using UnityEngine.SceneManagement;
 using UnityEngine.AddressableAssets;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
+using Celezt.SaveSystem.Utilities;
 
 namespace Celezt.SaveSystem
 {
@@ -87,7 +89,6 @@ namespace Celezt.SaveSystem
         /// <summary>
         /// Save game to the last saved file.
         /// </summary>
-        [ConsoleMethod("save", "Saves game to the last saved file")]
         public static void SaveGame()
         {
             if (string.IsNullOrEmpty(_lastSaveName))
@@ -102,7 +103,6 @@ namespace Celezt.SaveSystem
         /// Save game to specified file.
         /// </summary>
         /// <param name="fileName"></param>
-        [ConsoleMethod("save", "Saves game to specified file")]
         public static void SaveGame(string fileName)
         {
             if (string.IsNullOrEmpty(fileName))
@@ -161,8 +161,7 @@ namespace Celezt.SaveSystem
         /// <summary>
         /// Load the last saved file.
         /// </summary>
-        [ConsoleMethod("load", "Loads game to the last saved file")]
-        public static void LoadGame()
+        public static async UniTask LoadGame()
         {
             if (string.IsNullOrEmpty(_lastSaveName))
             {
@@ -170,16 +169,15 @@ namespace Celezt.SaveSystem
                 return;
             }
 
-            LoadGame(_lastSaveName);
+            await LoadGame(_lastSaveName);
         }
         /// <summary>
         /// Load game from specified file.
         /// </summary>
         /// <param name="fileName"></param>
-        [ConsoleMethod("load", "Loads game to the specified file")]
-        public static void LoadGame(string fileName)
+        public static async UniTask LoadGame(string fileName)
         {
-            void Load(string correctFilePath)
+            async UniTask Load(string correctFilePath)
             {
                 try
                 {
@@ -192,75 +190,65 @@ namespace Celezt.SaveSystem
                     if (saveInfo.Version != VERSION)
                         throw new Exception($"The save file, version: {saveInfo.Version} is not supported. The current supported version is {VERSION}");
 
-                    GameObject loadGameObject = new GameObject("LoadingScene_Temp");
-                    LoadBehaviour loadBehaviour = loadGameObject.AddComponent<LoadBehaviour>();
-                    UnityEngine.Object.DontDestroyOnLoad(loadGameObject);
+					AsyncOperation operation = SceneManager.LoadSceneAsync(saveInfo.SceneIndex);
+					operation.allowSceneActivation = false;
 
-                    IEnumerator LoadAsync()
-                    {
-                        AsyncOperation operation = SceneManager.LoadSceneAsync(saveInfo.SceneIndex);
-                        operation.allowSceneActivation = false;
+					while (!operation.isDone)   // When loading is done. It will not be true until allowSceneActivation is true.
+					{
+						OnLoading.Invoke(operation);
 
-                        while (!operation.isDone)   // When loading is done. It will not be true until allowSceneActivation is true.
-                        {
-                            OnLoading.Invoke(operation);
+						if (operation.progress >= 0.9f) // Will not progress past 0.9 until allowSceneActivation is true.
+						{
+							Guid[] toRemove = (from x in _entries.Keys
+											   where !_persistentEntries.Contains(x)
+											   select x).ToArray();
 
-                            if (operation.progress >= 0.9f) // Will not progress past 0.9 until allowSceneActivation is true.
-                            {
-                                Guid[] toRemove = (from x in _entries.Keys
-                                                       where !_persistentEntries.Contains(x) select x).ToArray();
+							for (int i = 0; i < toRemove.Length; i++) // Remove all non persistent entries.
+								RemoveEntry(toRemove[i]);
 
-                                for (int i = 0; i < toRemove.Length; i++) // Remove all non persistent entries.
-                                    RemoveEntry(toRemove[i]);
+							for (int j = 0; j < _instancesByScene.Length; j++)  // Clear all instance data.
+								_instancesByScene[j].Clear();
 
-                                for (int j = 0; j < _instancesByScene.Length; j++)  // Clear all instance data.
-                                    _instancesByScene[j].Clear();
+							for (int i = 1; i < toDeserialize.Length; i++)  // Skip SaveInfo.
+							{
+								Guid guid = toDeserialize[i].guid;
+								object data = toDeserialize[i].data;
 
-                                for (int i = 1; i < toDeserialize.Length; i++)  // Skip SaveInfo.
-                                {
-                                    Guid guid = toDeserialize[i].guid;
-                                    object data = toDeserialize[i].data;
+								if (data is Instance instance)  // Get all instances to be instanced to a scene.
+								{
+									_instancesByScene[instance.SceneIndex].Add(guid);
+								}
 
-                                    if (data is Instance instance)  // Get all instances to be instanced to a scene.
-                                    {
-                                        _instancesByScene[instance.SceneIndex].Add(guid);
-                                    }
+								if (_entries.TryGetValue(guid, out Entry outEntry))
+								{
+									outEntry.LoadedSave = data;  // Set last saved data from file.
+									_entries[guid] = outEntry;
+								}
+								else
+								{
+									Entry newEntry = new Entry(data);
+									newEntry.LoadedSave = data;
+									_entries[guid] = newEntry;
+								}
 
-                                    if (_entries.TryGetValue(guid, out Entry outEntry))
-                                    {
-                                        outEntry.LoadedSave = data;  // Set last saved data from file.
-                                        _entries[guid] = outEntry;
-                                    }
-                                    else
-                                    {
-                                        Entry newEntry = new Entry(data);
-                                        newEntry.LoadedSave = data;
-                                        _entries[guid] = newEntry;
-                                    }
+							}
 
-                                }
+							OnBeforeLoad.Invoke();
+							operation.allowSceneActivation = true;
+						}
 
-                                OnBeforeLoad.Invoke();
-                                operation.allowSceneActivation = true;
-                            }
-                            
-                            yield return null;
-                        }
+						await UniTask.Yield();
+					}
 
-                        for (int i = 1; i < toDeserialize.Length; i++)  // Deserialize and load data from file.
-                        {
-                            Guid guid = toDeserialize[i].guid;
-                            object data = toDeserialize[i].data;
+					for (int i = 1; i < toDeserialize.Length; i++)  // Deserialize and load data from file.
+					{
+						Guid guid = toDeserialize[i].guid;
+						object data = toDeserialize[i].data;
 
-                            if (_entries.TryGetValue(guid, out var outEntry))
-                                outEntry.InvokeLoad(data);
-                        }
-
-                        UnityEngine.Object.Destroy(loadGameObject);
-                    }
-
-                    loadBehaviour.StartCoroutine(LoadAsync());
-                }
+						if (_entries.TryGetValue(guid, out var outEntry))
+							outEntry.InvokeLoad(data);
+					}
+				}
                 catch(Exception e)
                 {
                     Debug.LogException(e);
@@ -284,21 +272,21 @@ namespace Celezt.SaveSystem
             if (currentExist && tempExist)  // Both current and temp exist. Use the current in that case.
             {
                 Debug.LogWarning("Something went wrong last time saved. The temp version still exist and the current save will be used instead.");
-                Load(filePath);
+                await Load(filePath);
             }
             else if (tempExist && oldExist) // Both temp and old exist. Use the old in that case.
             {
                 Debug.LogWarning("Something went wrong last time saved. The temp and old version still exist and the old save will be used instead.");
-                Load(oldFilePath);
+                await Load(oldFilePath);
             }
             else if (currentExist && oldExist) // Both current and old exist. Use the old in that case.
             {
                 Debug.LogWarning("Something went wrong last time saved. The old version still exist and will instead be used.");
-                Load(oldFilePath);
+                await Load(oldFilePath);
             }
             else if (currentExist)
             {
-                Load(filePath);
+                await Load(filePath);
             }
             else // if failed to load
             {
@@ -326,7 +314,6 @@ namespace Celezt.SaveSystem
         /// <summary>
         /// Deletes specified save file if it exist.
         /// </summary>
-        [ConsoleMethod("delete_save", "Deletes specified save file if it exist.")]
         public static void DeleteSaveGame(string fileName)
         {
             try
@@ -342,7 +329,6 @@ namespace Celezt.SaveSystem
         /// <summary>
         /// Opens the save folder automatically for the user.
         /// </summary>
-        [ConsoleMethod("open_save_folder", "Opens the save folder")]
         public static void OpenSaveGameFolder()
         {
             try
