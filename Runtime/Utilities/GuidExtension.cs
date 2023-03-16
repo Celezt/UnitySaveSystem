@@ -9,11 +9,8 @@ using UnityEngine;
 
 namespace Celezt.SaveSystem.Utilities
 {
-	public static class GuidExtension
+	internal static class GuidExtension
 	{
-		/// <summary>
-		/// <see cref="https://stackoverflow.com/a/63719049/12707382"/>
-		/// </summary>
 		public static Guid Xor(this Guid a, Guid b)
 		{
 			Span<long> spanA = MemoryMarshal.CreateSpan(ref UnsafeUtility.As<Guid, long>(ref a), 2);
@@ -25,14 +22,12 @@ namespace Celezt.SaveSystem.Utilities
 			return b;
 		}
 
-		/// <summary>
-		/// <see cref="https://stackoverflow.com/a/6248764/12707382"/>
-		/// </summary>
 		public static Guid Generate(string input)
 		{
 			using (MD5 md5 = MD5.Create())
 			{
-				byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
+				Span<byte> hash = stackalloc byte[16];
+				md5.TryComputeHash(Encoding.UTF8.GetBytes(input), hash, out _);
 				return new Guid(hash);
 			}
 		}

@@ -13,6 +13,9 @@ using Celezt.SaveSystem.Utilities;
 
 namespace Celezt.SaveSystem
 {
+    /// <summary>
+    /// Save system hub to access all useful methods and properties.
+    /// </summary>
     public static class SaveSystem
     {
         public const int VERSION = 1;
@@ -135,8 +138,8 @@ namespace Celezt.SaveSystem
                     string tempFilePath = filePath + ".tmp";
                     string oldFilePath = filePath + ".old";
 
-                    byte[] bytes = SerializationUtility.SerializeValue(toSerialize, DataFormat.Binary);
-                    File.WriteAllBytes(tempFilePath, bytes);
+                    using FileStream stream = File.OpenWrite(tempFilePath);
+					SerializationUtility.SerializeValue(toSerialize, stream, DataFormat.Binary);
 
                     File.Move(filePath, oldFilePath);
                     File.Move(tempFilePath, filePath);
@@ -144,8 +147,8 @@ namespace Celezt.SaveSystem
                 }
                 else
                 {
-                    byte[] bytes = SerializationUtility.SerializeValue(toSerialize, DataFormat.Binary);
-                    File.WriteAllBytes(filePath, bytes);
+					using FileStream stream = File.OpenWrite(filePath);
+					SerializationUtility.SerializeValue(toSerialize, stream, DataFormat.Binary);
                 }
             }
             catch (Exception e)
@@ -181,8 +184,8 @@ namespace Celezt.SaveSystem
             {
                 try
                 {
-                    byte[] bytes = File.ReadAllBytes(correctFilePath);
-                    var toDeserialize = ((Guid guid, object data)[])SerializationUtility.DeserializeValueWeak(bytes, DataFormat.Binary);
+                    using FileStream stream = File.OpenRead(correctFilePath);   
+                    var toDeserialize = SerializationUtility.DeserializeValue<(Guid guid, object data)[]>(stream, DataFormat.Binary);
 
                     if (toDeserialize[0].data is not SaveInfo saveInfo)
                         throw new Exception("Save info is missing.");
@@ -195,7 +198,7 @@ namespace Celezt.SaveSystem
 
 					while (!operation.isDone)   // When loading is done. It will not be true until allowSceneActivation is true.
 					{
-						OnLoading.Invoke(operation);
+						OnLoading(operation);
 
 						if (operation.progress >= 0.9f) // Will not progress past 0.9 until allowSceneActivation is true.
 						{
@@ -233,7 +236,7 @@ namespace Celezt.SaveSystem
 
 							}
 
-							OnBeforeLoad.Invoke();
+							OnBeforeLoad();
 							operation.allowSceneActivation = true;
 						}
 
@@ -752,11 +755,6 @@ namespace Celezt.SaveSystem
             _instancesByScene = new HashSet<Guid>[SceneManager.sceneCountInBuildSettings + 1];
             for (int i = 0; i < _instancesByScene.Length; i++)
                 _instancesByScene[i] = new HashSet<Guid>();
-
-            if (SaveSystem.TryGetLoadedSave("key", out bool boolValue))
-            {
-                Debug.Log(boolValue);
-            }
 
             SceneManager.sceneLoaded += (scene, mode) =>
             {

@@ -1,13 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Celezt.SaveSystem.Utilities
 {
 	/// <summary>
 	/// <see cref="https://forum.unity.com/threads/how-to-assign-matrix4x4-to-transform.121966/"/>
 	/// </summary>
-	public static class MatrixExtension
+	internal static class MatrixExtension
 	{
 		/// <summary>
 		/// Identity quaternion.
@@ -32,14 +33,13 @@ namespace Celezt.SaveSystem.Utilities
 		/// <returns>
 		/// Translation offset.
 		/// </returns>
-		public static Vector3 GetTranslation(this ref Matrix4x4 matrix)
-		{
-			Vector3 translate;
-			translate.x = matrix.m03;
-			translate.y = matrix.m13;
-			translate.z = matrix.m23;
-			return translate;
-		}
+		public static Vector3 GetTranslation(this ref Matrix4x4 matrix) =>
+			new Vector3
+			{
+				z = matrix.m23,
+				y = matrix.m13,
+				x = matrix.m03,
+			};
 
 		/// <summary>
 		/// Extract rotation quaternion from transform matrix.
@@ -51,15 +51,19 @@ namespace Celezt.SaveSystem.Utilities
 		/// </returns>
 		public static Quaternion GetRotation(this ref Matrix4x4 matrix)
 		{
-			Vector3 forward;
-			forward.x = matrix.m02;
-			forward.y = matrix.m12;
-			forward.z = matrix.m22;
+			Vector3 forward = new Vector3
+			{
+				x = matrix.m02,
+				y = matrix.m12,
+				z = matrix.m22,
+			};
 
-			Vector3 upwards;
-			upwards.x = matrix.m01;
-			upwards.y = matrix.m11;
-			upwards.z = matrix.m21;
+			Vector3 upwards = new Vector3
+			{
+				x = matrix.m01,
+				y = matrix.m11,
+				z = matrix.m21,
+			};
 
 			return Quaternion.LookRotation(forward, upwards);
 		}
@@ -72,14 +76,13 @@ namespace Celezt.SaveSystem.Utilities
 		/// <returns>
 		/// Scale vector.
 		/// </returns>
-		public static Vector3 GetScale(this ref Matrix4x4 matrix)
-		{
-			Vector3 scale;
-			scale.x = new Vector4(matrix.m00, matrix.m10, matrix.m20, matrix.m30).magnitude;
-			scale.y = new Vector4(matrix.m01, matrix.m11, matrix.m21, matrix.m31).magnitude;
-			scale.z = new Vector4(matrix.m02, matrix.m12, matrix.m22, matrix.m32).magnitude;
-			return scale;
-		}
+		public static Vector3 GetScale(this ref Matrix4x4 matrix) =>
+			new Vector3
+			{
+				x = new Vector4(matrix.m00, matrix.m10, matrix.m20, matrix.m30).magnitude,
+				y = new Vector4(matrix.m01, matrix.m11, matrix.m21, matrix.m31).magnitude,
+				z = new Vector4(matrix.m02, matrix.m12, matrix.m22, matrix.m32).magnitude,
+			};
 
 		/// <summary>
 		/// Extract position, rotation and scale from TRS matrix.
