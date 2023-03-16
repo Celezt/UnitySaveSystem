@@ -1,0 +1,18 @@
+{
+    "name": "Celezt.SaveSystem.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:122c0f929ec6df04382d06492062abcc"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
