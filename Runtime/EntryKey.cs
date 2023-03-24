@@ -100,23 +100,25 @@ namespace Celezt.SaveSystem
             return SaveSystem.TryGetSave(_owner.Xor(guid), out outData);
         }
 
-        /// <summary>
-        /// Subscribe to a sub entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        /// <returns>If it exist.</returns>
-        public bool AddListener(string id, Action<LoadOperation> onLoad) => AddListener(GuidExtension.Generate(id), onLoad);
-        /// <summary>
-        /// Subscribe to a sub entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        /// <returns>If it exist.</returns>
-        public bool AddListener(Guid guid, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Subscribe to a sub entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If it exist.</returns>
+		public bool AddListener(string id, Action<object> onLoad, bool loadPreviousSave = true) => AddListener(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Subscribe to a sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If it exist.</returns>
+		public bool AddListener(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            return SaveSystem.AddListener(combinedGuid, onLoad);
+            return SaveSystem.AddListener(combinedGuid, onLoad, loadPreviousSave);
         }
 
         /// <summary>
@@ -125,58 +127,63 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public bool RemoveListener(string id, Action<LoadOperation> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
+        public bool RemoveListener(string id, Action<object> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Unsubscribe an action from a sub entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public bool RemoveListener(Guid guid, Action<LoadOperation> onLoad)
+        public bool RemoveListener(Guid guid, Action<object> onLoad)
         {
             Guid combinedGuid = _owner.Xor(guid);
             return SaveSystem.RemoveListener(combinedGuid, onLoad);
         }
 
-        /// <summary>
-        /// Add or set persistent sub entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetPersistentSubEntry(string id, Func<object> onSave, Action<LoadOperation> onLoad) => SetPersistentSubEntry(GuidExtension.Generate(id), onSave, onLoad);
-        /// <summary>
-        /// Add or set persistent sub entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetPersistentSubEntry(Guid guid, Func<object> onSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set persistent sub entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetPersistentSubEntry(string id, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true) => SetPersistentSubEntry(GuidExtension.Generate(id), onSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set persistent sub entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetPersistentSubEntry(Guid guid, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            SaveSystem.SetPersistentEntry(combinedGuid, onSave, onLoad);
+            SaveSystem.SetPersistentEntry(combinedGuid, onSave, onLoad, loadPreviousSave);
 
             _subEntries.Add(guid);
 
             return this;
         }
-        /// <summary>
-        /// Add or set persistent sub entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetPersistentSubEntry(string id, object toSave, Action<LoadOperation> onLoad) => SetPersistentSubEntry(GuidExtension.Generate(id), toSave, onLoad);
-        /// <summary>
-        /// Add or set persistent sub entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetPersistentSubEntry(Guid guid, object toSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set persistent sub entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetPersistentSubEntry(string id, object toSave, Action<object> onLoad, bool loadPreviousSave = true) 
+            => SetPersistentSubEntry(GuidExtension.Generate(id), toSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set persistent sub entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetPersistentSubEntry(Guid guid, object toSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            SaveSystem.SetPersistentEntry(combinedGuid, toSave, onLoad);
+            SaveSystem.SetPersistentEntry(combinedGuid, toSave, onLoad, loadPreviousSave);
 
             _subEntries.Add(guid);
 
@@ -243,45 +250,51 @@ namespace Celezt.SaveSystem
             SaveSystem.ConvertToPersistentEntry(combinedGuid);
         }
 
-        /// <summary>
-        /// Add or set sub entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetSubEntry(string id, Func<object> onSave, Action<LoadOperation> onLoad) => SetSubEntry(GuidExtension.Generate(id), onSave, onLoad);
-        /// <summary>
-        /// Add or set sub entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetSubEntry(Guid guid, Func<object> onSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetSubEntry(string id, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true) 
+            => SetSubEntry(GuidExtension.Generate(id), onSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetSubEntry(Guid guid, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            SaveSystem.SetEntry(combinedGuid, onSave, onLoad);
+            SaveSystem.SetEntry(combinedGuid, onSave, onLoad, loadPreviousSave);
 
             _subEntries.Add(guid);
 
             return this;
         }
-        /// <summary>
-        /// Add or set sub entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetSubEntry(string id, object toSave, Action<LoadOperation> onLoad) => SetSubEntry(GuidExtension.Generate(id), toSave, onLoad);
-        /// <summary>
-        /// Add or set sub entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public EntryKey SetSubEntry(Guid guid, object toSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetSubEntry(string id, object toSave, Action<object> onLoad, bool loadPreviousSave = true) 
+            => SetSubEntry(GuidExtension.Generate(id), toSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		public EntryKey SetSubEntry(Guid guid, object toSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            SaveSystem.SetEntry(combinedGuid, toSave, onLoad);
+            SaveSystem.SetEntry(combinedGuid, toSave, onLoad, loadPreviousSave);
 
             _subEntries.Add(guid);
 

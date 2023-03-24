@@ -215,9 +215,9 @@ namespace Celezt.SaveSystem
             }
             else if (_isDestroyedSaved) // If not instanced at runtime, save if scene object has been destroyed.
             {
-                _key.SetSubEntry(_destroyGuid, false, operation =>
+                _key.SetSubEntry(_destroyGuid, false, value =>
                 {
-                    bool isDestroyed = operation.GetResult<bool>();
+                    bool isDestroyed = (bool)value;
 
                     if (isDestroyed)
                         Destroy(gameObject);
@@ -226,9 +226,9 @@ namespace Celezt.SaveSystem
 
             if (_isPositionSaved || _isRotationSaved || _isScaleSaved)  // if any of them is enabled.
             {
-                _key.SetSubEntry(_transformGuid, () => transform.localToWorldMatrix, operation =>
+                _key.SetSubEntry(_transformGuid, () => transform.localToWorldMatrix, value =>
                 {
-                    var matrix = operation.GetResult<Matrix4x4>();
+                    var matrix = (Matrix4x4)value;
 
                     if (_isPositionSaved)
                         transform.position = matrix.GetPosition();

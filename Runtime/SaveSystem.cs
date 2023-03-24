@@ -490,31 +490,37 @@ namespace Celezt.SaveSystem
         /// </summary>
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Get value when loading.</param>
+        /// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
         /// <returns>If it exist.</returns>
-        public static bool AddListener(string id, Action<LoadOperation> onLoad) => AddListener(GuidExtension.Generate(id), onLoad);
-        /// <summary>
-        /// Subscribe to an entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        /// <returns>If it exist.</returns>
-        public static bool AddListener(Guid guid, Action<LoadOperation> onLoad)
+        public static bool AddListener(string id, Action<object> onLoad, bool loadPreviousSave = true) 
+            => AddListener(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Subscribe to an entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If it exist.</returns>
+		public static bool AddListener(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
         {
-            if (_entries.TryGetValue(guid, out Entry outEntry))
-            {
-                int loadCount = outEntry.Load.Count;
-                outEntry.Load.Add(onLoad);
+			if (_entries.TryGetValue(guid, out Entry outEntry))
+			{
+				outEntry.Load.Add(onLoad);
 
-                object save = outEntry.Save;
-                if (save != null)   // Call latest if any save previously existed.
-                    outEntry.Load[loadCount].Invoke(new LoadOperation(LoadOperation.LoadState.LoadPreviousSave, save));
+				if (loadPreviousSave)
+				{
+					object save = outEntry.Save;
+					if (save != null)   // Call latest if any save previously existed.
+						onLoad.Invoke(save);
+				}
 
                 return true;
-            }
+			}
 
-            _entries[guid] = new Entry(onLoad);
+			_entries[guid] = new Entry(onLoad);
+
             return false;
-        }
+		}
 
         /// <summary>
         /// Unsubscribe an action from an entry.
@@ -522,14 +528,14 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public static bool RemoveListener(string id, Action<LoadOperation> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
+        public static bool RemoveListener(string id, Action<object> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Unsubscribe an action from an entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public static bool RemoveListener(Guid guid, Action<LoadOperation> onLoad)
+        public static bool RemoveListener(Guid guid, Action<object> onLoad)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
@@ -541,73 +547,87 @@ namespace Celezt.SaveSystem
             return false;
         }
 
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetPersistentEntry(string id, Func<object> onSave, Action<LoadOperation> onLoad) => SetPersistentEntry(GuidExtension.Generate(id), onSave, onLoad);
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetPersistentEntry(Guid guid, Func<object> onSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(string id, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true) 
+            => SetPersistentEntry(GuidExtension.Generate(id), onSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(Guid guid, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             _persistentEntries.Add(guid);
-            SetEntry(guid, onSave, onLoad);
+            return SetEntry(guid, onSave, onLoad, loadPreviousSave);
         }
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetPersistentEntry(string id, object toSave, Action<LoadOperation> onLoad) => SetPersistentEntry(GuidExtension.Generate(id), toSave, onLoad);
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetPersistentEntry(Guid guid, object toSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(string id, object toSave, Action<object> onLoad, bool loadPreviousSave = true) 
+            => SetPersistentEntry(GuidExtension.Generate(id), toSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(Guid guid, object toSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             _persistentEntries.Add(guid);
-            SetEntry(guid, toSave, onLoad);
+            return SetEntry(guid, toSave, onLoad, loadPreviousSave);
         }
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public static void SetPersistentEntry(string id, Func<object> onSave) => SetPersistentEntry(GuidExtension.Generate(id), onSave);
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public static void SetPersistentEntry(Guid guid, Func<object> onSave)
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(string id, Func<object> onSave) => SetPersistentEntry(GuidExtension.Generate(id), onSave);
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(Guid guid, Func<object> onSave)
         {
             _persistentEntries.Add(guid);
-            SetEntry(guid, onSave);
+            return SetEntry(guid, onSave);
         }
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        public static void SetPersistentEntry(string id, object toSave) => SetPersistentEntry(GuidExtension.Generate(id), toSave);
-        /// <summary>
-        /// Add or set persistent entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        public static void SetPersistentEntry(Guid guid, object toSave)
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(string id, object toSave) => SetPersistentEntry(GuidExtension.Generate(id), toSave);
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(Guid guid, object toSave)
         {
             _persistentEntries.Add(guid);
-            SetEntry(guid, toSave);
+            return SetEntry(guid, toSave);
         }
 
         /// <summary>
@@ -628,109 +648,139 @@ namespace Celezt.SaveSystem
             _persistentEntries.Add(guid);
         }
 
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetEntry(string id, Func<object> onSave, Action<LoadOperation> onLoad) => SetEntry(GuidExtension.Generate(id), onSave, onLoad);
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetEntry(Guid guid, Func<object> onSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// /// <returns>If entry already exist.</returns>
+		public static bool SetEntry(string id, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true) => SetEntry(GuidExtension.Generate(id), onSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(Guid guid, Func<object> onSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
-                int loadCount = outEntry.Load.Count;
                 outEntry.Load.Add(onLoad);
 
-                object save = outEntry.Save;
-                if (save != null)   // Call latest if any save previously existed.
-                    outEntry.Load[loadCount].Invoke(new LoadOperation(LoadOperation.LoadState.LoadPreviousSave, save));
+                if (loadPreviousSave)
+                {
+					object save = outEntry.Save;
+					if (save != null)   // Call latest if any save previously existed.
+						onLoad.Invoke(save);
+				}
 
                 outEntry.Save = onSave;
                 _entries[guid] = outEntry;
+
+                return true;
             }
-            else
-                _entries[guid] = new Entry(onSave, onLoad);
+
+            _entries[guid] = new Entry(onSave, onLoad);
+
+            return false;
         }
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetEntry(string id, object toSave, Action<LoadOperation> onLoad) => SetEntry(GuidExtension.Generate(id), toSave, onLoad);
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        /// <param name="onLoad">Get value when loading.</param>
-        public static void SetEntry(Guid guid, object toSave, Action<LoadOperation> onLoad)
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(string id, object toSave, Action<object> onLoad, bool loadPreviousSave = true) => SetEntry(GuidExtension.Generate(id), toSave, onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(Guid guid, object toSave, Action<object> onLoad, bool loadPreviousSave = true)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
-                int loadCount = outEntry.Load.Count;
                 outEntry.Load.Add(onLoad);
 
-                object save = outEntry.Save;
-                if (save != null)   // Call latest if any save previously existed.
-                    outEntry.Load[loadCount].Invoke(new LoadOperation(LoadOperation.LoadState.LoadPreviousSave, save));
+                if (loadPreviousSave)
+                {
+					object save = outEntry.Save;
+					if (save != null)   // Call latest if any save previously existed.
+						onLoad.Invoke(save);
+				}
 
                 outEntry.Save = toSave;
                 _entries[guid] = outEntry;
+
+                return true;
             }
-            else
-                _entries[guid] = new Entry(toSave, onLoad);
+
+            _entries[guid] = new Entry(toSave, onLoad);
+
+            return false;
         }
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public static void SetEntry(string id, Func<object> onSave) => SetEntry(GuidExtension.Generate(id), onSave);
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public static void SetEntry(Guid guid, Func<object> onSave)
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(string id, Func<object> onSave) => SetEntry(GuidExtension.Generate(id), onSave);
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(Guid guid, Func<object> onSave)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
                 outEntry.Save = onSave;
                 _entries[guid] = outEntry;
+
+                return true;
             }
-            else
-                _entries[guid] = new Entry(onSave);
+
+            _entries[guid] = new Entry(onSave);
+
+            return false;
         }
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        public static void SetEntry(string id, object toSave) => SetEntry(GuidExtension.Generate(id), toSave);
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="guid">Identifier.</param>
-        /// <param name="toSave">Set value.</param>
-        public static void SetEntry(Guid guid, object toSave)
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(string id, object toSave) => SetEntry(GuidExtension.Generate(id), toSave);
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="toSave">Set value.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(Guid guid, object toSave)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
                 outEntry.Save = toSave;
                 _entries[guid] = outEntry;
+
+                return true;
             }
-            else
-            {
-                _entries[guid] = new Entry(toSave);
-            }
+
+			_entries[guid] = new Entry(toSave);
+
+			return false;
         }
 
         /// <summary>

@@ -7,7 +7,7 @@ namespace Celezt.SaveSystem
 {
     internal struct Entry
     {
-        internal List<Action<LoadOperation>> Load => _onLoad;
+        internal List<Action<object>> Load => _onLoad;
         internal object Save
         {
             get => InvokeSave();
@@ -26,10 +26,10 @@ namespace Celezt.SaveSystem
         }
 
         private Func<object> _onSave;
-        private List<Action<LoadOperation>> _onLoad;
+        private List<Action<object>> _onLoad;
         private object _loadedSave;
 
-        internal Entry(object toSave, Action<LoadOperation> onLoad)
+        internal Entry(object toSave, Action<object> onLoad)
         {
             _onLoad = new();
 
@@ -37,7 +37,7 @@ namespace Celezt.SaveSystem
             _onLoad.Add(onLoad);
             _loadedSave = null;
         }
-        internal Entry(Func<object> onSave, Action<LoadOperation> onLoad)
+        internal Entry(Func<object> onSave, Action<object> onLoad)
         {
             _onLoad = new();
 
@@ -52,7 +52,7 @@ namespace Celezt.SaveSystem
             _onSave = onSave;
             _loadedSave = null;
         }
-        internal Entry(Action<LoadOperation> onLoad)
+        internal Entry(Action<object> onLoad)
         {
             _onLoad = new();
 
@@ -89,7 +89,7 @@ namespace Celezt.SaveSystem
                 }
                 else
                 {
-                    _onLoad[i].Invoke(new LoadOperation(LoadOperation.LoadState.LoadGame, data));
+                    _onLoad[i].Invoke(data);
                 }
             }
         }

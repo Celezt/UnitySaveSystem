@@ -22,12 +22,16 @@ namespace Celezt.SaveSystem.Utilities
 			return b;
 		}
 
+		/// <summary>
+		/// Create <see cref="Guid"/> from a <see cref="string"/> input using MD5.
+		/// </summary>
 		public static Guid Generate(string input)
 		{
 			using (MD5 md5 = MD5.Create())
 			{
 				Span<byte> hash = stackalloc byte[16];
-				md5.TryComputeHash(Encoding.UTF8.GetBytes(input), hash, out _);
+				md5.TryComputeHash(Encoding.UTF8.GetBytes(input), hash, out int written);
+				Debug.Assert(written == 16);
 				return new Guid(hash);
 			}
 		}
