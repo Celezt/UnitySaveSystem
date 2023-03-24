@@ -106,17 +106,17 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Get value when loading.</param>
         /// <returns>If it exist.</returns>
-        public bool SubscribeSubEntry(string id, Action<LoadOperation> onLoad) => SubscribeSubEntry(GuidExtension.Generate(id), onLoad);
+        public bool AddListener(string id, Action<LoadOperation> onLoad) => AddListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Subscribe to a sub entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Get value when loading.</param>
         /// <returns>If it exist.</returns>
-        public bool SubscribeSubEntry(Guid guid, Action<LoadOperation> onLoad)
+        public bool AddListener(Guid guid, Action<LoadOperation> onLoad)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            return SaveSystem.SubscribeEntry(combinedGuid, onLoad);
+            return SaveSystem.AddListener(combinedGuid, onLoad);
         }
 
         /// <summary>
@@ -125,17 +125,17 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public bool UnsubscribeSubEntry(string id, Action<LoadOperation> onLoad) => UnsubscribeSubEntry(GuidExtension.Generate(id), onLoad);
+        public bool RemoveListener(string id, Action<LoadOperation> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Unsubscribe an action from a sub entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public bool UnsubscribeSubEntry(Guid guid, Action<LoadOperation> onLoad)
+        public bool RemoveListener(Guid guid, Action<LoadOperation> onLoad)
         {
             Guid combinedGuid = _owner.Xor(guid);
-            return SaveSystem.UnsubscribeEntry(combinedGuid, onLoad);
+            return SaveSystem.RemoveListener(combinedGuid, onLoad);
         }
 
         /// <summary>

@@ -13,7 +13,7 @@ using UnityEditor;
 namespace Celezt.SaveSystem
 {
     [ExecuteInEditMode, DisallowMultipleComponent]
-    public class SaveBehaviour : MonoBehaviour, ISaveable, ISerializationCallbackReceiver
+    public class SaveBehaviour : MonoBehaviour, ISaveableObject, ISerializationCallbackReceiver
     {
         private static readonly Guid _transformGuid = GuidExtension.Generate("transform");
         private static readonly Guid _destroyGuid = GuidExtension.Generate("destroy");
@@ -44,11 +44,10 @@ namespace Celezt.SaveSystem
             set => _assetReference = value;
         }
 
-        // System guid we use for comparison and generation.
+        // System guid used for comparison and generation.
         private Guid _guid = Guid.Empty;
 
-        // Unity's serialization system doesn't know about System.Guid, so we convert to a byte array
-        // Fun fact, we tried using strings at first, but that allocated memory and was twice as slow.
+        // Unity's serialization system doesn't know about System.Guid, so we convert to a byte array.
         [SerializeField] private byte[] serializedGuid;
 
         [SerializeField] private bool _isPositionSaved = true;

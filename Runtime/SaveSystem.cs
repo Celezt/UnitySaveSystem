@@ -14,7 +14,7 @@ using Celezt.SaveSystem.Utilities;
 namespace Celezt.SaveSystem
 {
     /// <summary>
-    /// Save system hub to access all useful methods and properties.
+    /// Global save system.
     /// </summary>
     public static class SaveSystem
     {
@@ -403,7 +403,7 @@ namespace Celezt.SaveSystem
         {
             if (_entryKeys.TryGetValue(guid, out var entryKey))
                 entryKey.Clear();
-
+            
             return _entryKeys.Remove(guid);
         }
 
@@ -491,14 +491,14 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Get value when loading.</param>
         /// <returns>If it exist.</returns>
-        public static bool SubscribeEntry(string id, Action<LoadOperation> onLoad) => SubscribeEntry(GuidExtension.Generate(id), onLoad);
+        public static bool AddListener(string id, Action<LoadOperation> onLoad) => AddListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Subscribe to an entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Get value when loading.</param>
         /// <returns>If it exist.</returns>
-        public static bool SubscribeEntry(Guid guid, Action<LoadOperation> onLoad)
+        public static bool AddListener(Guid guid, Action<LoadOperation> onLoad)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
@@ -522,14 +522,14 @@ namespace Celezt.SaveSystem
         /// <param name="id">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public static bool UnsubscribeEntry(string id, Action<LoadOperation> onLoad) => UnsubscribeEntry(GuidExtension.Generate(id), onLoad);
+        public static bool RemoveListener(string id, Action<LoadOperation> onLoad) => RemoveListener(GuidExtension.Generate(id), onLoad);
         /// <summary>
         /// Unsubscribe an action from an entry.
         /// </summary>
         /// <param name="guid">Identifier.</param>
         /// <param name="onLoad">Unsubscribed action.</param>
         /// <returns>If it exist.</returns>
-        public static bool UnsubscribeEntry(Guid guid, Action<LoadOperation> onLoad)
+        public static bool RemoveListener(Guid guid, Action<LoadOperation> onLoad)
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {

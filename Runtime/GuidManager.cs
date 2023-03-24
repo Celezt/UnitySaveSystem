@@ -10,9 +10,15 @@ namespace Celezt.SaveSystem
 	/// </summary>
 	public class GuidManager
     {
-        // for each GUID we need to know the Game Object it references
-        // and an event to store all the callbacks that need to know when it is destroyed
-        private struct GuidInfo
+		private static GuidManager Instance => _instance ?? (_instance = new GuidManager());
+
+		private static GuidManager _instance;
+
+		private readonly Dictionary<Guid, GuidInfo> _guidToObjectMap = new Dictionary<Guid, GuidInfo>();
+
+		// for each GUID we need to know the Game Object it references
+		// and an event to store all the callbacks that need to know when it is destroyed
+		private struct GuidInfo
         {
             public GameObject GameObject;
 
@@ -50,13 +56,6 @@ namespace Celezt.SaveSystem
         {
             return Instance.ResolveGuidInternal(guid, null, null);
         }
-
-
-        private static GuidManager Instance => _instance ?? (_instance = new GuidManager());
-        private static GuidManager _instance;
-
-        private readonly Dictionary<Guid, GuidInfo> _guidToObjectMap = new Dictionary<Guid, GuidInfo>();
-
 
         private bool InternalAdd(SaveBehaviour saveBehaviour)
         {

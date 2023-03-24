@@ -5,8 +5,9 @@ using UnityEngine;
 
 namespace Celezt.SaveSystem
 {
-    public interface ISaveable
+    public interface ISaveableObject
     {
         public Guid Guid { get; }
-    }
+		public EntryKey EntryKey { get; }
+	}
 }
