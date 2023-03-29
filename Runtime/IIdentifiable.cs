@@ -5,9 +5,11 @@ using UnityEngine;
 
 namespace Celezt.SaveSystem
 {
-    public interface ISaveableObject
+    /// <summary>
+    /// Identifier used to group entries together to be saved under a common key.
+    /// </summary>
+    public interface IIdentifiable
     {
         public Guid Guid { get; }
-		public EntryKey EntryKey { get; }
 	}
 }

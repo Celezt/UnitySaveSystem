@@ -13,7 +13,7 @@ using UnityEditor;
 namespace Celezt.SaveSystem
 {
     [ExecuteInEditMode, DisallowMultipleComponent]
-    public class SaveBehaviour : MonoBehaviour, ISaveableObject, ISerializationCallbackReceiver
+    public class SaveBehaviour : MonoBehaviour, IIdentifiable, ISerializationCallbackReceiver
     {
         private static readonly Guid _transformGuid = GuidExtension.Generate("transform");
         private static readonly Guid _destroyGuid = GuidExtension.Generate("destroy");
@@ -21,7 +21,7 @@ namespace Celezt.SaveSystem
 
         public bool IsInstancedAtRuntime => _isInstancedAtRuntime;
 
-        public EntryKey EntryKey => SaveSystem.GetEntryKey(Guid);
+        public EntryKey EntryKey => _entryKey;
 
         public Guid Guid
         {
@@ -58,7 +58,7 @@ namespace Celezt.SaveSystem
 
         [SerializeField] private AssetReferenceGameObject _assetReference;
 
-        private EntryKey _key;
+        private EntryKey _entryKey;
 
         public bool IsGuidAssigned() => _guid != Guid.Empty;
 
@@ -202,11 +202,11 @@ namespace Celezt.SaveSystem
         {
             CreateGuid();
 
-            _key = SaveSystem.GetEntryKey(Guid);
+            _entryKey = SaveSystem.GetEntryKey(Guid);
 
             if (_isInstancedAtRuntime)      // Save asset reference and scene index when instanced at runtime.
             {
-                _key.SetSubEntry(_instanceGuid, () => new Instance
+                _entryKey.SetSubEntry(_instanceGuid, () => new Instance
                 {
                     InstanceGuid = Guid,
                     AssetReference = _assetReference,
@@ -215,7 +215,7 @@ namespace Celezt.SaveSystem
             }
             else if (_isDestroyedSaved) // If not instanced at runtime, save if scene object has been destroyed.
             {
-                _key.SetSubEntry(_destroyGuid, false, value =>
+                _entryKey.SetSubEntry(_destroyGuid, false, value =>
                 {
                     bool isDestroyed = (bool)value;
 
@@ -226,7 +226,7 @@ namespace Celezt.SaveSystem
 
             if (_isPositionSaved || _isRotationSaved || _isScaleSaved)  // if any of them is enabled.
             {
-                _key.SetSubEntry(_transformGuid, () => transform.localToWorldMatrix, value =>
+                _entryKey.SetSubEntry(_transformGuid, () => transform.localToWorldMatrix, value =>
                 {
                     var matrix = (Matrix4x4)value;
 
@@ -276,8 +276,8 @@ namespace Celezt.SaveSystem
                     }
                     else
                     {
-                        _key.RemoveSubEntry(_transformGuid);
-                        _key.SetSubEntry(_destroyGuid, true);
+                        _entryKey.RemoveSubEntry(_transformGuid);
+                        _entryKey.SetSubEntry(_destroyGuid, true);
                     }
                 }
 #if UNITY_EDITOR

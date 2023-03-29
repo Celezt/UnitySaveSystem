@@ -121,15 +121,10 @@ namespace Celezt.SaveSystem
 
             toSerialize[i++] = (Guid.Empty, new SaveInfo(VERSION, SceneManager.GetActiveScene().buildIndex));   // First index is for save info.
 
-            foreach (var stream in _entries)
-            {
-                Guid guid = stream.Key;
-                Entry entry = stream.Value;
+            foreach ((Guid guid, Entry entry) in _entries)
+				toSerialize[i++] = (guid, entry.Save);
 
-                toSerialize[i++] = (guid, entry.Save);
-            }
-
-            try
+			try
             {
                 string filePath = SavePath + fileName + SAVE_FILE_TYPE;
 
@@ -379,7 +374,7 @@ namespace Celezt.SaveSystem
         /// <summary>
         /// Get or add <see cref="EntryKey"/>. Used to add sub entries. Get from existing <see cref="SaveBehaviour"/>. If none exist, returns null.
         /// </summary>
-        /// <param name="guid">Identifier.</param>
+        /// <param name="gameObject">GetComponentInParent for <see cref="SaveBehaviour"/>.</param>
         /// <returns><see cref="EntryKey"/>.</returns>
         public static EntryKey GetEntryKey(GameObject gameObject)
         {
@@ -387,13 +382,24 @@ namespace Celezt.SaveSystem
 
             return saveBehaviour.EntryKey;
         }
+		/// <summary>
+		/// Get or add <see cref="EntryKey"/>. Used to add sub entries. Get from existing <see cref="SaveBehaviour"/>. If none exist, returns null.
+		/// </summary>
+		/// <param name="monoBehaviour">GetComponentInParent for <see cref="SaveBehaviour"/>.</param>
+		/// <returns><see cref="EntryKey"/>.</returns>
+		public static EntryKey GetEntryKey(MonoBehaviour monoBehaviour)
+		{
+			SaveBehaviour saveBehaviour = monoBehaviour.GetComponentInParent<SaveBehaviour>();
 
-        /// <summary>
-        /// Remove entry if it exist.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <returns>If it exist.</returns>
-        public static bool RemoveEntryKey(string id) => RemoveEntryKey(GuidExtension.Generate(id));
+			return saveBehaviour.EntryKey;
+		}
+
+		/// <summary>
+		/// Remove entry if it exist.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <returns>If it exist.</returns>
+		public static bool RemoveEntryKey(string id) => RemoveEntryKey(GuidExtension.Generate(id));
         /// <summary>
         /// Remove entry if it exist.
         /// </summary>
