@@ -1,5 +1,7 @@
 fileFormatVersion: 2
 guid: 477dac55edb404e499c0e4ce458faa11
+labels:
+- RoslynAnalyzer
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -65,5 +67,5 @@ PluginImporter:
       settings:
         CPU: AnyCPU
   userData: 
-  assetBundleName: roslynanalyzer
+  assetBundleName: 
   assetBundleVariant: 
