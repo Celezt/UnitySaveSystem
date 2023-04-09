@@ -189,12 +189,30 @@ namespace Celezt.SaveSystem
 
             return this;
         }
-        /// <summary>
-        /// Add or set persistent sub entry. Does not refresh on load.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public EntryKey SetPersistentSubEntry(string id, Func<object> onSave) => SetPersistentSubEntry(GuidExtension.Generate(id), onSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		public EntryKey SetPersistentSubEntry(string id, Action<object> onLoad, bool loadPreviousSave = true) => SetPersistentSubEntry(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		public EntryKey SetPersistentSubEntry(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
+		{
+			Guid combinedGuid = _owner.Xor(guid);
+			SaveSystem.SetPersistentEntry(combinedGuid, onLoad, loadPreviousSave);
+
+			return this;
+		}
+		/// <summary>
+		/// Add or set persistent sub entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		public EntryKey SetPersistentSubEntry(string id, Func<object> onSave) => SetPersistentSubEntry(GuidExtension.Generate(id), onSave);
         /// <summary>
         /// Add or set persistent sub entry. Does not refresh on load.
         /// </summary>
@@ -300,12 +318,30 @@ namespace Celezt.SaveSystem
 
             return this;
         }
-        /// <summary>
-        /// Add or set entry.
-        /// </summary>
-        /// <param name="id">Identifier.</param>
-        /// <param name="onSave">Set value when saving.</param>
-        public EntryKey SetSubEntry(string id, Func<object> onSave) => SetSubEntry(GuidExtension.Generate(id), onSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		public EntryKey SetSubEntry(string id, Action<object> onLoad, bool loadPreviousSave = true) => SetSubEntry(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		public EntryKey SetSubEntry(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
+		{
+            Guid combinedGuid = _owner.Xor(guid);
+            SaveSystem.SetEntry(combinedGuid, onLoad, loadPreviousSave);
+
+			return this;
+		}
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onSave">Set value when saving.</param>
+		public EntryKey SetSubEntry(string id, Func<object> onSave) => SetSubEntry(GuidExtension.Generate(id), onSave);
         /// <summary>
         /// Add or set entry.
         /// </summary>

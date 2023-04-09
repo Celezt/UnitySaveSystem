@@ -500,33 +500,14 @@ namespace Celezt.SaveSystem
         /// <returns>If it exist.</returns>
         public static bool AddListener(string id, Action<object> onLoad, bool loadPreviousSave = true) 
             => AddListener(GuidExtension.Generate(id), onLoad, loadPreviousSave);
-		/// <summary>
-		/// Subscribe to an entry.
-		/// </summary>
-		/// <param name="guid">Identifier.</param>
-		/// <param name="onLoad">Get value when loading.</param>
-		/// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
-		/// <returns>If it exist.</returns>
-		public static bool AddListener(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
-        {
-			if (_entries.TryGetValue(guid, out Entry outEntry))
-			{
-				outEntry.Load.Add(onLoad);
-
-				if (loadPreviousSave)
-				{
-					object save = outEntry.Save;
-					if (save != null)   // Call latest if any save previously existed.
-						onLoad.Invoke(save);
-				}
-
-                return true;
-			}
-
-			_entries[guid] = new Entry(onLoad);
-
-            return false;
-		}
+        /// <summary>
+        /// Subscribe to an entry.
+        /// </summary>
+        /// <param name="guid">Identifier.</param>
+        /// <param name="onLoad">Get value when loading.</param>
+        /// <param name="loadPreviousSave">Call onLoad if a save exist.</param>
+        /// <returns>If it exist.</returns>
+        public static bool AddListener(Guid guid, Action<object> onLoad, bool loadPreviousSave = true) => SetEntry(guid, onLoad, loadPreviousSave);
 
         /// <summary>
         /// Unsubscribe an action from an entry.
@@ -598,6 +579,24 @@ namespace Celezt.SaveSystem
         {
             _persistentEntries.Add(guid);
             return SetEntry(guid, toSave, onLoad, loadPreviousSave);
+        }
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(string id, Action<object> onLoad, bool loadPreviousSave = true) => SetPersistentEntry(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set persistent entry. Does not refresh on load.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetPersistentEntry(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
+        {
+            _persistentEntries.Add(guid);
+            return SetEntry(guid, onLoad, loadPreviousSave);
         }
 		/// <summary>
 		/// Add or set persistent entry. Does not refresh on load.
@@ -734,6 +733,39 @@ namespace Celezt.SaveSystem
 
             return false;
         }
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(string id, Action<object> onLoad, bool loadPreviousSave = true) => SetEntry(GuidExtension.Generate(id), onLoad, loadPreviousSave);
+		/// <summary>
+		/// Add or set entry.
+		/// </summary>
+		/// <param name="guid">Identifier.</param>
+		/// <param name="onLoad">Get value when loading.</param>
+		/// <returns>If entry already exist.</returns>
+		public static bool SetEntry(Guid guid, Action<object> onLoad, bool loadPreviousSave = true)
+		{
+			if (_entries.TryGetValue(guid, out Entry outEntry))
+			{
+				outEntry.Load.Add(onLoad);
+
+				if (loadPreviousSave)
+				{
+					object save = outEntry.Save;
+					if (save != null)   // Call latest if any save previously existed.
+						onLoad.Invoke(save);
+				}
+
+				return true;
+			}
+
+			_entries[guid] = new Entry(onLoad);
+
+			return false;
+		}
 		/// <summary>
 		/// Add or set entry.
 		/// </summary>
