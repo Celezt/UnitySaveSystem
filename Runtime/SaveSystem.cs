@@ -371,16 +371,19 @@ namespace Celezt.SaveSystem
 
             return newSaveObject;
         }
-        /// <summary>
-        /// Get or add <see cref="EntryKey"/>. Used to add sub entries. Get from existing <see cref="SaveBehaviour"/>. If none exist, returns null.
-        /// </summary>
-        /// <param name="gameObject">GetComponentInParent for <see cref="SaveBehaviour"/>.</param>
-        /// <returns><see cref="EntryKey"/>.</returns>
-        public static EntryKey GetEntryKey(GameObject gameObject)
+		/// <summary>
+		/// Get or add <see cref="EntryKey"/>. Used to add sub entries. Get from existing <see cref="IIdentifiable"/> or <see cref="SaveBehaviour"/>.
+		/// </summary>
+		/// <param name="gameObject">GetComponentInParent for <see cref="IIdentifiable"/> or <see cref="SaveBehaviour"/>.</param>
+		/// <returns><see cref="EntryKey"/>.</returns>
+		public static EntryKey GetEntryKey(GameObject gameObject)
         {
-            SaveBehaviour saveBehaviour = gameObject.GetComponentInParent<SaveBehaviour>();
+            IIdentifiable identifiable = gameObject.GetComponentInParent<IIdentifiable>();
 
-            return saveBehaviour.EntryKey;
+            if (identifiable == null)
+                throw new NullReferenceException($"Could not find {nameof(IIdentifiable)} in parent.");
+
+            return GetEntryKey(identifiable.Guid);
         }
 		/// <summary>
 		/// Get or add <see cref="EntryKey"/>. Used to add sub entries. Get from existing <see cref="SaveBehaviour"/>. If none exist, returns null.
