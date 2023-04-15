@@ -55,6 +55,29 @@ namespace Celezt.SaveSystem
 	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
 	public class SaveAttribute : Attribute
 	{
+		/// <summary>
+		/// Converts to snake_case.
+		/// </summary>
+		public string? Identifier { get; set; }
+		public SaveSetting Setting => _setting;
 
+		private SaveSetting _setting;
+
+		public SaveAttribute(SaveSetting setting = SaveSetting.Default)
+		{
+			_setting = setting;
+		}
+	}
+
+	public enum SaveSetting
+	{
+		/// <summary>
+		/// Removes if the instance owner is destroyed. 
+		/// </summary>
+		Default,
+		/// <summary>
+		/// Keeps the save alive even when the instance owner is destroyed.
+		/// </summary>
+		Persistent,
 	}
 }
