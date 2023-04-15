@@ -2,6 +2,8 @@
 using System.Collections;
 using UnityEngine;
 
+#nullable enable
+
 namespace Celezt.SaveSystem
 {
 	/// <summary>
@@ -56,20 +58,20 @@ namespace Celezt.SaveSystem
 	public class SaveAttribute : Attribute
 	{
 		/// <summary>
-		/// Converts to snake_case.
+		/// Optional identifier instead of using value name.
 		/// </summary>
 		public string? Identifier { get; set; }
-		public SaveSetting Setting => _setting;
+		public SaveSettings Setting => _setting;
 
-		private SaveSetting _setting;
+		private SaveSettings _setting;
 
-		public SaveAttribute(SaveSetting setting = SaveSetting.Default)
+		public SaveAttribute(SaveSettings setting = SaveSettings.Default)
 		{
 			_setting = setting;
 		}
 	}
 
-	public enum SaveSetting
+	public enum SaveSettings
 	{
 		/// <summary>
 		/// Removes if the instance owner is destroyed. 
