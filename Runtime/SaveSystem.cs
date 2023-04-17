@@ -92,10 +92,10 @@ namespace Celezt.SaveSystem
             }
         }
 
-        /// <summary>
-        /// Save game to the last saved file.
-        /// </summary>
-        public static void SaveGame()
+		/// <summary>
+		/// Save game to the last saved file.
+		/// </summary>
+		public static void SaveGame()
         {
             if (string.IsNullOrEmpty(_lastSaveName))
             {
@@ -177,7 +177,7 @@ namespace Celezt.SaveSystem
             {
                 try
                 {
-                    using FileStream stream = File.OpenRead(correctFilePath);   
+					using FileStream stream = File.OpenRead(correctFilePath);   
                     var toDeserialize = SerializationUtility.DeserializeValue<SaveData>(stream, DataFormat.Binary);
 
                     if (toDeserialize.Version != VERSION)
@@ -189,7 +189,7 @@ namespace Celezt.SaveSystem
 					while (!operation.isDone)   // When loading is done. It will not be true until allowSceneActivation is true.
 					{
 						OnLoading.Invoke(operation);
-
+                        
 						if (operation.progress >= 0.9f) // Will not progress past 0.9 until allowSceneActivation is true.
 						{
 							for (int j = 0; j < _instancesByScene.Length; j++)  // Clear all instance data.
