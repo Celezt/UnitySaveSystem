@@ -74,11 +74,11 @@ namespace Celezt.SaveSystem
 	public enum SaveSettings
 	{
 		/// <summary>
-		/// Removes if the instance owner is destroyed. 
+		/// Refresh on load.
 		/// </summary>
 		Default,
 		/// <summary>
-		/// Keeps the save alive even when the instance owner is destroyed.
+		/// Does not refresh on load.
 		/// </summary>
 		Persistent,
 	}

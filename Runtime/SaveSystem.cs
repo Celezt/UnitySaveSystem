@@ -1,3 +1,5 @@
+#define SAVE_SYSTEM
+
 using System;
 using System.Linq;
 using System.Collections;
@@ -89,6 +91,7 @@ namespace Celezt.SaveSystem
 #endif
             }
         }
+
         /// <summary>
         /// Save game to the last saved file.
         /// </summary>
@@ -116,17 +119,11 @@ namespace Celezt.SaveSystem
 
             OnBeforeSave.Invoke();
 
-            var toSerialize = new (Guid guid, object data)[_entries.Count + 1];
-            int i = 0;
-
-            toSerialize[i++] = (Guid.Empty, new SaveInfo(VERSION, SceneManager.GetActiveScene().buildIndex));   // First index is for save info.
-
-            foreach ((Guid guid, Entry entry) in _entries)
-				toSerialize[i++] = (guid, entry.Save);
-
 			try
             {
-                string filePath = SavePath + fileName + SAVE_FILE_TYPE;
+				SaveData saveData = new SaveData(VERSION, SceneManager.GetActiveScene().buildIndex, _entries);
+
+				string filePath = SavePath + fileName + SAVE_FILE_TYPE;
 
                 if (File.Exists(fileName))  // Overwrite existing file with the same path.
                 {
@@ -134,7 +131,8 @@ namespace Celezt.SaveSystem
                     string oldFilePath = filePath + ".old";
 
                     using FileStream stream = File.OpenWrite(tempFilePath);
-					SerializationUtility.SerializeValue(toSerialize, stream, DataFormat.Binary);
+                    
+					SerializationUtility.SerializeValue(saveData, stream, DataFormat.Binary);
 
                     File.Move(filePath, oldFilePath);
                     File.Move(tempFilePath, filePath);
@@ -143,7 +141,7 @@ namespace Celezt.SaveSystem
                 else
                 {
 					using FileStream stream = File.OpenWrite(filePath);
-					SerializationUtility.SerializeValue(toSerialize, stream, DataFormat.Binary);
+					SerializationUtility.SerializeValue(saveData, stream, DataFormat.Binary);
                 }
             }
             catch (Exception e)
@@ -180,71 +178,55 @@ namespace Celezt.SaveSystem
                 try
                 {
                     using FileStream stream = File.OpenRead(correctFilePath);   
-                    var toDeserialize = SerializationUtility.DeserializeValue<(Guid guid, object data)[]>(stream, DataFormat.Binary);
+                    var toDeserialize = SerializationUtility.DeserializeValue<SaveData>(stream, DataFormat.Binary);
 
-                    if (toDeserialize[0].data is not SaveInfo saveInfo)
-                        throw new Exception("Save info is missing.");
+                    if (toDeserialize.Version != VERSION)
+                        throw new Exception($"The save file, version: {toDeserialize.Version} is not supported. The current supported version is {VERSION}");
 
-                    if (saveInfo.Version != VERSION)
-                        throw new Exception($"The save file, version: {saveInfo.Version} is not supported. The current supported version is {VERSION}");
-
-					AsyncOperation operation = SceneManager.LoadSceneAsync(saveInfo.SceneIndex);
+					AsyncOperation operation = SceneManager.LoadSceneAsync(toDeserialize.SpawnSceneIndex);
 					operation.allowSceneActivation = false;
 
 					while (!operation.isDone)   // When loading is done. It will not be true until allowSceneActivation is true.
 					{
-						OnLoading(operation);
+						OnLoading.Invoke(operation);
 
 						if (operation.progress >= 0.9f) // Will not progress past 0.9 until allowSceneActivation is true.
 						{
-							Guid[] toRemove = (from x in _entries.Keys
-											   where !_persistentEntries.Contains(x)
-											   select x).ToArray();
-
-							for (int i = 0; i < toRemove.Length; i++) // Remove all non persistent entries.
-								RemoveEntry(toRemove[i]);
-
 							for (int j = 0; j < _instancesByScene.Length; j++)  // Clear all instance data.
 								_instancesByScene[j].Clear();
 
-							for (int i = 1; i < toDeserialize.Length; i++)  // Skip SaveInfo.
-							{
-								Guid guid = toDeserialize[i].guid;
-								object data = toDeserialize[i].data;
+                            var oldEntries = _entries;
+                            _entries = toDeserialize.Entries;   // Replace the old entries with the new.
 
-								if (data is Instance instance)  // Get all instances to be instanced to a scene.
-								{
-									_instancesByScene[instance.SceneIndex].Add(guid);
+                            foreach (Guid guid in _persistentEntries)                   // Update with old content for all persistent entries.
+                                if (_entries.TryGetValue(guid, out Entry outEntry))
+                                {
+                                    if (oldEntries.TryGetValue(guid, out Entry outOldEntry))
+                                    {
+										outEntry.OnLoad.AddRange(outOldEntry.AllAliveOnLoad); // Add all old on load when persistent and still alive.
+
+                                        if (outOldEntry.IsOnSaveAlive)                  // Use old on save when persistent and still alive.
+											outEntry.OnSave = outOldEntry.OnSave;           
+                                    }
 								}
 
-								if (_entries.TryGetValue(guid, out Entry outEntry))
-								{
-									outEntry.LoadedSave = data;  // Set last saved data from file.
-									_entries[guid] = outEntry;
-								}
-								else
-								{
-									Entry newEntry = new Entry(data);
-									newEntry.LoadedSave = data;
-									_entries[guid] = newEntry;
-								}
-
+                            foreach (var pair in _entries)
+                            {
+								if (pair.Value.CachedData is Instance instance)  // Get all instances to be instanced to a scene.
+									_instancesByScene[instance.SceneIndex].Add(pair.Key);
 							}
 
-							OnBeforeLoad();
+							OnBeforeLoad.Invoke();
 							operation.allowSceneActivation = true;
 						}
 
 						await UniTask.Yield();
 					}
 
-					for (int i = 1; i < toDeserialize.Length; i++)  // Deserialize and load data from file.
+					foreach (var pair in _entries)
 					{
-						Guid guid = toDeserialize[i].guid;
-						object data = toDeserialize[i].data;
-
-						if (_entries.TryGetValue(guid, out var outEntry))
-							outEntry.InvokeLoad(data);
+						if (_entries.TryGetValue(pair.Key, out var outEntry))
+							outEntry.InvokeLoad();
 					}
 				}
                 catch(Exception e)
@@ -416,42 +398,42 @@ namespace Celezt.SaveSystem
             return _entryKeys.Remove(guid);
         }
 
-        /// <summary>
-        /// Try get the last loaded save from existing entry.
-        /// </summary>
-        /// <param name="id">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public static bool TryGetLoadedSave(string id, out object outData) => TryGetLoadedSave(GuidExtension.Generate(id), out outData);
-        /// <summary>
-        /// Try get the last loaded save from existing entry.
-        /// </summary>
-        /// <param name="guid">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public static bool TryGetLoadedSave(Guid guid, out object outData)
+		/// <summary>
+		/// Try get cached data from existing entry.
+		/// </summary>
+		/// <param name="id">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public static bool TryGetCachedData(string id, out object outData) => TryGetCachedData(GuidExtension.Generate(id), out outData);
+		/// <summary>
+		/// Try get cached data from existing entry.
+		/// </summary>
+		/// <param name="guid">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public static bool TryGetCachedData(Guid guid, out object outData)
         {
-            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.LoadedSave != null;
-            outData = exist ? outEntry.LoadedSave : null;
+            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.CachedData != null;
+            outData = exist ? outEntry.CachedData : null;
             return exist;
         }
-        /// <summary>
-        /// Try get the last loaded save from existing entry.
-        /// </summary>
-        /// <param name="id">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public static bool TryGetLoadedSave<T>(string id, out T outData) => TryGetLoadedSave(GuidExtension.Generate(id), out outData);
-        /// <summary>
-        /// Try get the last loaded save from existing entry.
-        /// </summary>
-        /// <param name="guid">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public static bool TryGetLoadedSave<T>(Guid guid, out T outData)
+		/// <summary>
+		/// Try get cached data from existing entry.
+		/// </summary>
+		/// <param name="id">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public static bool TryGetCachedData<T>(string id, out T outData) => TryGetCachedData(GuidExtension.Generate(id), out outData);
+		/// <summary>
+		/// Try get cached data from existing entry.
+		/// </summary>
+		/// <param name="guid">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public static bool TryGetCachedData<T>(Guid guid, out T outData)
         {
-            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.LoadedSave != null;
-            outData = exist ? (T)outEntry.LoadedSave : default(T);
+            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.CachedData != null;
+            outData = exist ? (T)outEntry.CachedData : default(T);
             return exist;
         }
 
@@ -470,8 +452,9 @@ namespace Celezt.SaveSystem
         /// <returns>If any save exist.</returns>
         public static bool TryGetSave(Guid guid, out object outData)
         {
-            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.Save != null;
-            outData = exist ? outEntry.Save : null;
+            bool exist = _entries.TryGetValue(guid, out Entry outEntry);
+			object data = outEntry.Save;
+			outData = exist && data != null ? data : null;
             return exist;
         }
         /// <summary>
@@ -489,8 +472,9 @@ namespace Celezt.SaveSystem
         /// <returns>If any save exist.</returns>
         public static bool TryGetSave<T>(Guid guid, out T outData)
         {
-            bool exist = _entries.TryGetValue(guid, out Entry outEntry) && outEntry.Save != null;
-            outData = exist ? (T)outEntry.Save : default(T);
+			bool exist = _entries.TryGetValue(guid, out Entry outEntry);
+            object data = outEntry.Save;
+            outData = exist && data != null ? (T)data : default(T);
             return exist;
         }
 
@@ -529,7 +513,7 @@ namespace Celezt.SaveSystem
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
-                outEntry.Load.Remove(onLoad);
+                outEntry.OnLoad.Remove(onLoad);
 
                 return true;
             }
@@ -677,7 +661,7 @@ namespace Celezt.SaveSystem
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
-                outEntry.Load.Add(onLoad);
+                outEntry.OnLoad.Add(onLoad);
 
                 if (loadPreviousSave)
                 {
@@ -717,7 +701,7 @@ namespace Celezt.SaveSystem
         {
             if (_entries.TryGetValue(guid, out Entry outEntry))
             {
-                outEntry.Load.Add(onLoad);
+                outEntry.OnLoad.Add(onLoad);
 
                 if (loadPreviousSave)
                 {
@@ -753,7 +737,7 @@ namespace Celezt.SaveSystem
 		{
 			if (_entries.TryGetValue(guid, out Entry outEntry))
 			{
-				outEntry.Load.Add(onLoad);
+				outEntry.OnLoad.Add(onLoad);
 
 				if (loadPreviousSave)
 				{
@@ -849,7 +833,7 @@ namespace Celezt.SaveSystem
 
             SceneManager.sceneLoaded += (scene, mode) =>
             {
-                int sceneIndex = scene.buildIndex;
+				int sceneIndex = scene.buildIndex;
 
                 foreach (Guid guid in _instancesByScene[sceneIndex])
                 {

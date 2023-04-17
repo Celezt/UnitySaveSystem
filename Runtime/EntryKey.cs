@@ -30,39 +30,39 @@ namespace Celezt.SaveSystem
                 return false;
         }
 
-        /// <summary>
-        /// Try get the last loaded save from existing sub entry.
-        /// </summary>
-        /// <param name="id">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public bool TryGetSubLoadedSave(string id, out object outData) => TryGetSubLoadedSave(GuidExtension.Generate(id), out outData);
-        /// <summary>
-        /// Try get the last loaded save from existing sub entry.
-        /// </summary>
-        /// <param name="guid">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public bool TryGetSubLoadedSave(Guid guid, out object outData)
+		/// <summary>
+		/// Try get cached data from existing sub entry.
+		/// </summary>
+		/// <param name="id">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public bool TryGetSubCachedData(string id, out object outData) => TryGetSubCachedData(GuidExtension.Generate(id), out outData);
+		/// <summary>
+		/// Try get cached data from existing sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public bool TryGetSubCachedData(Guid guid, out object outData)
         {
-            return SaveSystem.TryGetLoadedSave(_owner.Xor(guid), out outData);
+            return SaveSystem.TryGetCachedData(_owner.Xor(guid), out outData);
         }
-        /// <summary>
-        /// Try get the last loaded save from existing sub entry.
-        /// </summary>
-        /// <param name="id">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public bool TryGetSubLoadedSave<T>(string id, out T outData) => TryGetSubLoadedSave(GuidExtension.Generate(id), out outData);
-        /// <summary>
-        /// Try get the last loaded save from existing sub entry.
-        /// </summary>
-        /// <param name="guid">Identifier</param>
-        /// <param name="outData">Data.</param>
-        /// <returns>If loaded save exist.</returns>
-        public bool TryGetSubLoadedSave<T>(Guid guid, out T outData)
+		/// <summary>
+		/// Try get cached data from existing sub entry.
+		/// </summary>
+		/// <param name="id">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public bool TryGetSubCachedData<T>(string id, out T outData) => TryGetSubCachedData(GuidExtension.Generate(id), out outData);
+		/// <summary>
+		/// Try get cached data from existing sub entry.
+		/// </summary>
+		/// <param name="guid">Identifier</param>
+		/// <param name="outData">Data.</param>
+		/// <returns>If cached data exist.</returns>
+		public bool TryGetSubCachedData<T>(Guid guid, out T outData)
         {
-            return SaveSystem.TryGetLoadedSave(_owner.Xor(guid), out outData);
+            return SaveSystem.TryGetCachedData(_owner.Xor(guid), out outData);
         }
 
         /// <summary>
@@ -190,13 +190,13 @@ namespace Celezt.SaveSystem
             return this;
         }
 		/// <summary>
-		/// Add or set sub entry.
+		/// Add or set persistent sub entry. Does not refresh on load.
 		/// </summary>
 		/// <param name="id">Identifier.</param>
 		/// <param name="onLoad">Get value when loading.</param>
 		public EntryKey SetPersistentSubEntry(string id, Action<object> onLoad, bool loadPreviousSave = true) => SetPersistentSubEntry(GuidExtension.Generate(id), onLoad, loadPreviousSave);
 		/// <summary>
-		/// Add or set sub entry.
+		/// Add or set persistent sub entry. Does not refresh on load.
 		/// </summary>
 		/// <param name="guid">Identifier.</param>
 		/// <param name="onLoad">Get value when loading.</param>

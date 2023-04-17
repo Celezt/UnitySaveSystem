@@ -207,11 +207,11 @@ namespace Celezt.SaveSystem
             if (_isInstancedAtRuntime)      // Save asset reference and scene index when instanced at runtime.
             {
                 _entryKey.SetSubEntry(_instanceGuid, () => new Instance
-                {
-                    InstanceGuid = Guid,
-                    AssetReference = _assetReference,
-                    SceneIndex = gameObject.scene.buildIndex
-                });
+                (
+                    instanceGuid: Guid,
+                    assetReference: _assetReference,
+                    sceneIndex: gameObject.scene.buildIndex
+                ));
             }
             else if (_isDestroyedSaved) // If not instanced at runtime, save if scene object has been destroyed.
             {

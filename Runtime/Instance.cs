@@ -7,10 +7,18 @@ using UnityEngine.AddressableAssets;
 namespace Celezt.SaveSystem
 {
     [Serializable]
-    internal struct Instance
+    internal readonly struct Instance
     {
-        public Guid InstanceGuid;
-        public AssetReference AssetReference;
-        public int SceneIndex;
+        public readonly Guid InstanceGuid;
+        public readonly AssetReference AssetReference;
+        public readonly int SceneIndex;
+
+
+        public Instance(Guid instanceGuid, AssetReference assetReference, int sceneIndex)
+        {
+            InstanceGuid = instanceGuid;
+            AssetReference = assetReference;
+            SceneIndex = sceneIndex;
+        }
     }
 }
