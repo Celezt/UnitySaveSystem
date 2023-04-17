@@ -114,7 +114,7 @@ namespace Celezt.SaveSystem
         {
             Entry entry = new Entry();
             entry._onLoad = new();
-            entry.OnSave = () => data;
+            entry._onSave = () => data;
             entry._cachedData = data;
             return entry;
         }

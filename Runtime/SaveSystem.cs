@@ -125,25 +125,25 @@ namespace Celezt.SaveSystem
 
 				string filePath = SavePath + fileName + SAVE_FILE_TYPE;
 
-                if (File.Exists(fileName))  // Overwrite existing file with the same path.
-                {
-                    string tempFilePath = filePath + ".tmp";
-                    string oldFilePath = filePath + ".old";
+				if (File.Exists(fileName))  // Overwrite existing file with the same path.
+				{
+					string tempFilePath = filePath + ".tmp";
+					string oldFilePath = filePath + ".old";
 
-                    using FileStream stream = File.OpenWrite(tempFilePath);
-                    
+					using FileStream stream = File.OpenWrite(tempFilePath);
+
 					SerializationUtility.SerializeValue(saveData, stream, DataFormat.Binary);
 
-                    File.Move(filePath, oldFilePath);
-                    File.Move(tempFilePath, filePath);
-                    File.Delete(oldFilePath);
-                }
-                else
-                {
+					File.Move(filePath, oldFilePath);
+					File.Move(tempFilePath, filePath);
+					File.Delete(oldFilePath);
+				}
+				else
+				{
 					using FileStream stream = File.OpenWrite(filePath);
 					SerializationUtility.SerializeValue(saveData, stream, DataFormat.Binary);
-                }
-            }
+				}
+			}
             catch (Exception e)
             {
                 Debug.LogException(e);
@@ -177,8 +177,13 @@ namespace Celezt.SaveSystem
             {
                 try
                 {
-					using FileStream stream = File.OpenRead(correctFilePath);   
-                    var toDeserialize = SerializationUtility.DeserializeValue<SaveData>(stream, DataFormat.Binary);
+					OnBeforeLoad.Invoke();
+
+					var toDeserialize = await UniTask.RunOnThreadPool(() =>
+                    {
+                        using FileStream stream = File.OpenRead(correctFilePath);
+						return SerializationUtility.DeserializeValue<SaveData>(stream, DataFormat.Binary);
+                    });
 
                     if (toDeserialize.Version != VERSION)
                         throw new Exception($"The save file, version: {toDeserialize.Version} is not supported. The current supported version is {VERSION}");
@@ -216,14 +221,15 @@ namespace Celezt.SaveSystem
 									_instancesByScene[instance.SceneIndex].Add(pair.Key);
 							}
 
-							OnBeforeLoad.Invoke();
 							operation.allowSceneActivation = true;
+
+                            break;
 						}
 
 						await UniTask.Yield();
 					}
 
-					foreach (var pair in _entries)
+					foreach (var pair in _entries)  // Call invoke on all entries.
 					{
 						if (_entries.TryGetValue(pair.Key, out var outEntry))
 							outEntry.InvokeLoad();
