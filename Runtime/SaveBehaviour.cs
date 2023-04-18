@@ -204,14 +204,19 @@ namespace Celezt.SaveSystem
 
             _entryKey = SaveSystem.GetEntryKey(Guid);
 
-            if (_isInstancedAtRuntime)      // Save asset reference and scene index when instanced at runtime.
+            if (_isInstancedAtRuntime) // Save asset reference and scene index when instanced at runtime.
             {
-                _entryKey.SetSubEntry(_instanceGuid, () => new Instance
-                (
-                    instanceGuid: Guid,
-                    assetReference: _assetReference,
-                    sceneIndex: gameObject.scene.buildIndex
-                ));
+                if (_assetReference != null)
+                {
+                    _entryKey.SetSubEntry(_instanceGuid, () => new Instance
+                    (
+                        instanceGuid: Guid,
+                        assetReference: _assetReference,
+                        sceneIndex: gameObject.scene.buildIndex
+                    ));
+                }
+                else
+                    Debug.LogError($"Asset reference is missing for SaveBehaviour: {Guid}. It was unable to save it as an instance.");
             }
             else if (_isDestroyedSaved) // If not instanced at runtime, save if scene object has been destroyed.
             {
