@@ -10,6 +10,12 @@ The easiest way to save something is to use the 'Save' attribute. It takes advan
 public partial class Example : MonoBehaviour
 {
      [Save]
+     public const string EXAMPLE_CONST = "This is a const string";
+     
+     [Save]
+     public Guid ExampleGuid { get; set; } = Guid.NewGuid();
+     
+     [Save]
      private int _exampleValue;
 
      [Save]
@@ -17,22 +23,27 @@ public partial class Example : MonoBehaviour
 
      private void Awake()
      {
-     RegisterSaveObject();
+          RegisterSaveObject();
      }
 }
 
+// Auto generated code.
 public partial class Example
 {
      /// ... ///
      protected void RegisterSaveObject()
      {
-         global::Celezt.SaveSystem.SaveSystem.GetEntryKey(this)
-             .SetSubEntry("example_value", 
-                  () => _exampleValue, 
-                 value => SetExampleValue((int)value));
-    }
+          global::Celezt.SaveSystem.SaveSystem.GetEntryKey(this)
+               .SetSubEntry("example_const", () => EXAMPLE_CONST)
+               .SetSubEntry("example_guid", () => ExampleGuid, value => ExampleGuid = (Guid)value)
+               .SetSubEntry("example_value", () => _exampleValue, value => SetExampleValue((int)value));
+     }
 }
 ```
+
+The 'Save' attribute is powerful and useful in different scenarios. It supports fields, properties and methods. The example above displays how the 'Save' attribute can save data. These are only a few examples of how to use it. They use their name as an identifier by default (set the property 'Identifier' to use a custom name) in snake_case. 'Get' and 'Set' in front of a method name is ignored. There can only be one set and get of an identifier and will otherwise overwrite the existing one, seen with 'SetExampleValue' overwrites '_exampleValue' set. There is a priority, with the first being the highest: method, property and field.
+
+For the source generator to work, it requires a 'partial' class and to call 'RegisterSaveObject' (Recommended to call from Awake()).
 
 ## Install
 
