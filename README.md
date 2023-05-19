@@ -58,13 +58,13 @@ if (SaveSystem.TryGetCachedData("key", out int outData)     //
 EntryKey key = SaveSystem.GetEntryKey("entry_key");
 key.SetSubEntry("key", 123);
 ```
-It is also possible manually set save data. The above shows a few variants of how to use the save system directly. Set and get can be done with a string or Guid as the key. 'SetEntry' is useful when using a singleton and does not need to worry about multiple instances. 'GetEntryKey' is convenient because only the entry key needs to be unique.
+It is also possible to manually set save data. The above shows a few variants of how to use the save system directly. Set and get can be done with a string or Guid as the key. 'SetEntry' is useful when using a singleton and does not need to worry about multiple instances. 'GetEntryKey' is convenient because only the entry key needs to be unique.
 
-Setting an entry can be done directly or by calling a delegate when the game saves or loads. When the game loads, it caches the data; the data loads by the load delegate the first time when registering a save. There is no time limit when adding a saved entry, which means loading can be asynchronous.
+Setting an entry can be done directly or by calling a delegate when the game saves or loads. When the game loads, it caches the data; the data loads by the load delegate the first time when registering a save. There is no time limit for when to add a saved entry, which means loading can be asynchronous.
 
 ## Install
 
-You can clone it and import it into the project as an asset or package or use Unity Package Manager and click **"Add package from git URL..."** and add https://github.com/Celezt/UnitySaveSystem.git.
+To install the plugin, clone it and import it into the project as an asset or package, or use Unity Package Manager and click "Add package from git URL..." and add https://github.com/Celezt/UnitySaveSystem.git.
 
 ## Save Location
 
