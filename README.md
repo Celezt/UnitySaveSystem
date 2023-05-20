@@ -62,6 +62,10 @@ It is also possible to manually set save data. The above shows a few variants of
 
 Setting an entry can be done directly or by calling a delegate when the game saves or loads. When the game loads, it caches the data; the data loads by the load delegate the first time when registering a save. There is no time limit for when to add a saved entry, which means loading can be asynchronous.
 
+![Save Behaviour](https://media.discordapp.net/attachments/985960740030656592/999837026964754522/unknown.png)
+
+Using purely 'IIdentifiable' is possible, especially for complete control over how to save and be identified, but for most scenarios, using 'SaveBehaviour' is sufficient. There should only be one 'SaveBehaviour' per prefab. Depending on the need, adding it to a game object is enough for it to work. It supports scene-instanced, prefabs, and runtime-instanced objects. It assigns a unique Guid and matches it with existing 'SaveBehaviour' to prevent duplicates. It gives a Guid to the prefab when instanced. By default, it will remember the position, the scene and if destroyed. If instanced at runtime, for it to instantiate on load after saving, it is possible to assign an asset, usually of the same prefab. Instantiating on load handles by [Unity Addressable](https://docs.unity3d.com/Packages/com.unity.addressables@1.21/manual/index.html). There is no need to use Addressable if it already exists in the scene at build.
+
 ## Install
 
 To install the plugin, clone it and import it into the project as an asset or package, or use Unity Package Manager and click "Add package from git URL..." and add https://github.com/Celezt/UnitySaveSystem.git.
